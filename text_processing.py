@@ -5,12 +5,13 @@ import nltk
 from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
 from transformers import pipeline
+from tqdm import tqdm  
 
 # Download necessary NLTK data
 nltk.download('stopwords')
 nltk.download('punkt')
 
-# Load Hugging Face emotion detection model
+# Load Hugging Face emotion detection model on GPU if available
 emotion_classifier = pipeline("text-classification", model="bhadresh-savani/distilbert-base-uncased-emotion")
 
 def preprocess_text(text):
@@ -43,7 +44,10 @@ def process_csv(file_path):
         raise ValueError("The CSV file must contain both 'text' and 'label' columns.")
     
     results = []
-    for index, row in df.iterrows():
+    total_rows = len(df)
+    print(f"Total Rows in Dataset: {total_rows}\n")
+
+    for index, row in tqdm(df.iterrows(), total=total_rows, desc="Processing Rows", unit="row"):
         text = row["text"]
         label = row["label"]
         
@@ -51,11 +55,13 @@ def process_csv(file_path):
             predicted_emotion = analyze_text(text)
             results.append({"text": text, "label": label, "predicted_emotion": predicted_emotion})
     
-    return results
+    return results, total_rows
 
 if __name__ == "__main__":
-    csv_file = "dataset.csv"  # Change to your CSV file path
-    results = process_csv(csv_file)
+    csv_file = "./Dataset/emotions.csv"  # Change to your CSV file path
+    results, processed_rows = process_csv(csv_file)
     
     for entry in results:
         print(f"Text: {entry['text']}\nActual Label: {entry['label']}\nPredicted Emotion: {entry['predicted_emotion']}\n{'-'*50}")
+
+    print(f"\n✅ Processing complete. Total rows processed: {processed_rows}")
