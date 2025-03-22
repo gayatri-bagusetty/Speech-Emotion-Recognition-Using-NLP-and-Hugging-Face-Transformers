@@ -1,0 +1,4 @@
+speechrecognition
+transformers
+nltk
+pyaudio
